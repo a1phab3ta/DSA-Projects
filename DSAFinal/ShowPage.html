@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .form-container {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        form {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        select, button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<h2>Show Inventories</h2>
+
+<form id="showInventoryForm">
+    <label for="inventoryName">Select Inventory:</label>
+    <select id="inventoryName" name="inventoryName" required>
+    </select>
+
+    <button type="button" onclick="showInventory();">Show Inventory</button>
+
+</form>
+
+<script>
+    // Get the 'username' cookie value
+    const usernameCookieValue = document.cookie.replace(/(?:(?:^|.*;\s*)username\s*=\s*([^;]*).*$)|^.*$/, "$1");
+
+    // Fetch inventory names when the page loads
+    window.onload = fetchInventoryNames;
+
+    async function fetchInventoryNames() {
+        try {
+            // Make a fetch request to get inventory names
+            const response = await fetch('/getInventoryNames', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${usernameCookieValue}` // Include the 'username' cookie value in the Authorization header
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Update the dropdown with inventory names
+                const inventorySelect = document.getElementById('inventoryName');
+                data.inventoryNames.forEach(name => {
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = name;
+                    inventorySelect.appendChild(option);
+                }
+                );
+
+            } else {
+                console.error('Error:', data.error);
+            }
+
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    async function showInventory() {
+
+        const selectedInventory = document.getElementById('inventoryName').value;
+
+        // Create "inventoryName" cookie with the selected inventory name
+        document.cookie = `inventoryName=${selectedInventory}`;
+
+        window.location.replace('inventoryFront.html');
+        return false; // Prevent default form submission
+    }
+</script>
+
+</body>
+</html>

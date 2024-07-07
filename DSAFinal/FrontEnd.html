@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1, h2 {
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .form-container {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        form {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        input, button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        #searchResultsTable {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>Inventory Management System</h1>
+
+    <!-- Login / Create Account Form -->
+    <div id="loginForm" class="form-container">
+        <h2>Login</h2>
+        <form id="login">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+
+            <button type="submit">Login</button>
+            <p>Don't have an account? <a href="#" onclick="showCreateAccountForm(event)">Create one</a>.</p>
+        </form>
+    </div>
+
+    <!-- Create Account Form (Initially hidden) -->
+    <div id="createAccountForm" class="form-container" style="display: none;">
+        <h2>Create Account</h2>
+        <form id="accountForm">
+            <label for="newUsername">New Username:</label>
+            <input type="text" id="newUsername" name="newUsername" required>
+
+            <label for="newPassword">New Password:</label>
+            <input type="password" id="newPassword" name="newPassword" required>
+
+            <button type="button" onclick="createAccount()">Create Account</button>
+            <p>Already have an account? <a href="#" onclick="showLoginForm()">Login</a>.</p>
+        </form>
+    </div>
+
+    <!-- Inventory Management Section (Initially hidden) -->
+    <div id="inventoryManagement" class="form-container" style="display: none;">
+        <h2>Inventory Management</h2>
+        <button type="button" onclick="redirectToCreatePage()">Create Inventory</button>
+        <button type="button" onclick="redirectToShowPage()">Show Inventories</button>
+
+    </div>
+
+    <script>
+        function redirectToCreatePage(){
+        window.location.href = "/CreatePage.html";
+    }
+        function redirectToShowPage(){
+        window.location.href = "/ShowPage.html";
+    }
+    </script>
+
+    <script>
+        // Array to store user credentials
+        const userCredentials = [];
+
+        // Functions to show/hide create account form and login form
+        function showCreateAccountForm(event) {
+            event.preventDefault();
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('createAccountForm').style.display = 'block';
+        }
+
+        function showLoginForm() {
+            document.getElementById('createAccountForm').style.display = 'none';
+            document.getElementById('loginForm').style.display = 'block';
+        }
+
+        function createAccount() {
+            const newUsername = document.getElementById('newUsername').value;
+            const newPassword = document.getElementById('newPassword').value;
+
+            // Check if the username is unique
+            if (isUsernameUnique(newUsername)) {
+                // Send data to the server
+                fetch('http://localhost:3000/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `newUsername=${encodeURIComponent(newUsername)}&newPassword=${encodeURIComponent(newPassword)}`,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message === 'Account created successfully.') {
+                        // Alert or redirect as needed
+                        alert('Account created successfully.');
+                        // Show the login form after account creation
+                        showLoginForm();
+                    } else {
+                        alert('Failed to create an account. Please try again.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    alert('An error occurred. Please try again.');
+                });
+            }
+    }
+
+        function isUsernameUnique(username) {
+            return !userCredentials.some(cred => cred.username === username);
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('loginForm').addEventListener('submit', function (event) {
+                event.preventDefault();
+                
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                // Make an AJAX request to the server for login
+                fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message === 'Login successful.') {
+                        // Hide the login form
+                        document.getElementById('loginForm').style.display = 'none';
+                        document.cookie = "username="+username
+
+                        // Show the inventory management section
+                        document.getElementById('inventoryManagement').style.display = 'block';
+                    } else {
+                        alert('Invalid username or password. Please try again.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
+                });
+            });
+        });
+    </script>
+
+</div>
+
+</body>
+</html>

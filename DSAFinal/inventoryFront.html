@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory Management System</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1,
+    h2 {
+      color: #333;
+    }
+
+    #loginForm,
+    #viewInventory,
+    #addItems,
+    #removeItems,
+    #searchFilters {
+      background-color: #fff;
+      border: 1px solid #ddd;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    form {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    input,
+    select,
+    button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #007bff;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    th,
+    td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    #searchResultsTable {
+      margin-top: 20px;
+    }
+
+    .plus {
+      width: 30px;
+      height:auto;
+      margin-right: 300px;
+    }
+
+    .image-container {
+      display: flex;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>Inventory Management System</h1>
+
+
+<script src="./LinkedList.js"></script>
+<script src="./heap.js"></script>
+<script src="./inventory.js"></script>
+<script>
+  let inventory = new Inventory();
+  async function populateTable() {
+    const table = document.getElementById('inventoryTable');
+
+    // Clear existing rows
+    while (table.rows.length > 1) {
+        table.deleteRow(1);
+    }
+
+    try {
+        // Make a fetch request to get inventory records
+        const response = await fetch(`/getInventoryRecords?inventoryName=${document.cookie.replace(/(?:(?:^|.*;\s*)inventoryName\s*=\s*([^;]*).*$)|^.*$/, "$1")}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            const records = data;
+
+            // Iterate through the records and populate the table
+            let i = 1;
+            records.forEach(record => {
+                inventory.add(record.items[0].name,parseFloat(record.items[0].price), parseInt(record.items[0].quantity), record.items[0].supplier)
+
+                const row = table.insertRow(-1);
+
+                // Add cells for each property
+                const cellId = row.insertCell(0);
+                const cellName = row.insertCell(1);
+                const cellQuantity = row.insertCell(2);
+                const cellPrice = row.insertCell(3);
+                const cellSupplier = row.insertCell(4);
+
+                // Populate cell content with record properties
+                cellId.innerHTML = i;
+                cellName.innerHTML = record.items[0].name;
+                cellQuantity.innerHTML = record.items[0].quantity;
+                cellPrice.innerHTML = record.items[0].price;
+                cellSupplier.innerHTML = record.items[0].supplier;
+                i = i+1
+            });
+        } else {
+            console.error('Error:', data.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    populateTable();
+});
+
+</script>
+
+<div id="viewInventory">
+  <h2>View Inventory</h2>
+
+  <div id="searchFilters">
+    <script>
+      function searchHelper() {
+        prompt = document.getElementById("searchInput").value;
+        inventory.search(prompt);
+      }
+    </script>
+    <form id="searchForm">
+      <label for="searchInput">Search:</label>
+      <input type="text" id="searchInput" name="searchInput">
+      <button type="button" onclick="searchHelper()">Search</button>
+      <div class="image-container">
+        <img src="/data/plus.png" onclick="redirectToAddItemPage()" class="plus" alt="Add Items">
+        <img src="/data/remove.png" onclick="redirectToRemoveItemPage()" class="plus" alt="Remove Items">
+      </div>
+      <table id="searchResultsTable">
+
+      </table>
+
+  </div>
+
+  <table id="inventoryTable">
+    <tr>
+      <th id="headerID">ID</th>
+      <th id="headerName">Name</th>
+      <th id="headerQuant">Quantity</th>
+      <th id="headerPrice">Price</th>
+      <th id="headerSupplier">Supplier</th>
+    </tr>
+  </table>
+  <script>
+    //Sorting functions when headers are clicked
+    let id = document.getElementById("headerID");
+    let name = document.getElementById("headerName");
+    let quant = document.getElementById("headerQuant");
+    let price = document.getElementById("headerPrice");
+    let supplier = document.getElementById("headerSupplier");
+
+
+    id.addEventListener("click", function(e){
+      inventory.sort(1);
+    });
+    name.addEventListener("click", function(e){
+      inventory.sort(2);
+    });
+    quant.addEventListener("click", function(e){
+      inventory.sort(4);
+    });
+    price.addEventListener("click", function(e){
+      inventory.sort(3);
+    });
+    supplier.addEventListener("click", function(e){
+      inventory.sort(5);
+    });
+
+  </script>
+
+</div>
+
+<script>
+  function redirectToAddItemPage() {
+    window.location.href = "addItemPage.html";
+  }
+
+  function redirectToRemoveItemPage() {
+    window.location.href = "removeItemPage.html";
+  }
+
+</script>
+
+<script>
+  function searchItems() {
+    const searchInput = document.getElementById('searchInput').value.toLowerCase();
+
+    // Filter items based on search input
+    const searchResults = inventoryList.filter(item =>
+      item.name.toLowerCase().includes(searchInput) ||
+      item.supplier.toLowerCase().includes(searchInput)
+    );
+
+    displaySearchResults(searchResults);
+  }
+  function filterByPrice() {
+    const priceFilter = parseFloat(document.getElementById('priceFilter').value);
+
+    // Filter items based on price
+    const priceResults = inventoryList.filter(item => item.price <= priceFilter);
+
+    displaySearchResults(priceResults);
+  }
+
+  function filterBySupplier() {
+    const supplierFilter = document.getElementById('supplierFilter').value.toLowerCase();
+
+    // Filter items based on supplier
+    const supplierResults = inventoryList.filter(item =>
+      item.supplier.toLowerCase() === supplierFilter
+    );
+
+    displaySearchResults(supplierResults);
+  }
+  function displaySearchResults(results) {
+    const table = document.getElementById('searchResultsTable');
+
+    // Clear existing rows
+    while (table.rows.length > 0) {
+      table.deleteRow(0);
+    }
+
+    // Populate the table with search results
+    results.forEach(item => {
+      const row = table.insertRow(-1);
+      const cellId = row.insertCell(0);
+      const cellName = row.insertCell(1);
+      const cellQuantity = row.insertCell(2);
+      const cellPrice = row.insertCell(3);
+      const cellSupplier = row.insertCell(4);
+
+      cellId.innerHTML = item.id;
+      cellName.innerHTML = item.name;
+      cellQuantity.innerHTML = item.quantity;
+      cellPrice.innerHTML = item.price;
+      cellSupplier.innerHTML = item.supplier;
+    });
+  }
+</script>
+
+</body>
+
+</html>
