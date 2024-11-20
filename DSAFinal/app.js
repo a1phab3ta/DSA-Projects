@@ -15,7 +15,7 @@ app.set('view engine', 'ejs');
 const db = mongoose.connection;
 
 // Connect to MongoDB
-const dbURI = "mongodb+srv://PranavN:Abysm080usa@cluster0.bye5tda.mongodb.net/inventoryManagement";
+const dbURI = "mongodb+srv://PranavN:[REDACTED]@cluster0.bye5tda.mongodb.net/inventoryManagement";
 // Define the user schema
 const userSchema = new mongoose.Schema({
     username: String,
